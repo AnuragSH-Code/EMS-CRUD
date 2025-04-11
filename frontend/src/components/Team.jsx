@@ -60,10 +60,10 @@ function Team() {
   });
 
   return (
-    <div className="p-8 flex flex-col gap-4 h-full">
-      <div className="flex justify-between items-end p-4">
-        <span className="text-3xl">Team</span>
-        <span className="text-gray-500">{filteredMembers.length} members</span>
+    <div className="p-4 flex flex-col gap-4 h-full">
+      <div className="flex justify-between bg-[#D7FEC8] rounded-md items-end p-4">
+        <span className="text-3xl text-[#0B996E] font-semibold ">EMS BREVO</span>
+        <span className="text-[#016A43]">{filteredMembers.length} members</span>
       </div>
       <div className="flex flex-col lg:flex-row justify-between gap-4">
         <SearchInput
@@ -72,7 +72,7 @@ function Team() {
           className="w-full lg:max-w-xs"
         />
         <button
-          className="px-4 py-2 font-semibold bg-zinc-800 text-white text-lg rounded-md"
+          className="px-4 py-2 cursor-pointer font-semibold bg-[#016A43] text-white text-lg rounded-md"
           onClick={() => {
             setSelectedMember(null);
             setIsModalOpen(true);
@@ -90,8 +90,7 @@ function Team() {
         <p className="text-center">Actions</p>
       </div>
 
-      {/* Updated scrollable container */}
-      <div className="flex flex-col gap-2 overflow-y-auto flex-grow hide-scroll scroll-smooth">
+      <div className="flex flex-col gap-2 overflow-y-scroll flex-grow hide-scroll scroll-smooth">
         {loading ? (
           <div className="text-center text-xl">Loading...</div>
         ) : (

@@ -2,9 +2,8 @@ import React from "react";
 
 function Card({ member, onEdit, onDelete }) {
   return (
-    <div className="grid grid-cols-5 items-center p-4 border-b border-gray-300 gap-4">
+    <div className="grid md:grid-cols-5 grid-cols-1 items-center p-4 border-b border-gray-300 gap-4">
       <div className="col-span-1 flex gap-4 items-center">
-        <div className="w-12 h-12 bg-blue-500 rounded-full"></div>
         <div className="flex flex-col">
           <span className="font-semibold">{member.firstname} {member.lastname}</span>
           <span className="text-sm text-gray-500">{member.role}</span>

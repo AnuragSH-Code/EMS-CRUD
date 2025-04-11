@@ -54,8 +54,8 @@ function EditProfile({ onClose, existingData, onSave }) {
         body: JSON.stringify(formData),
       });
 
-      onSave();  // Refresh the list in parent
-      onClose(); // Close the modal
+      onSave();  
+      onClose(); 
     } catch (err) {
       console.error("Error saving employee:", err);
       alert("Failed to save employee");
@@ -63,7 +63,7 @@ function EditProfile({ onClose, existingData, onSave }) {
   };
 
   return (
-    <div className="w-full p-4 bg-white rounded-lg shadow-lg">
+    <div className="w-full p-4 bg-white rounded-lg shadow-2xl">
       <div className="flex justify-between items-center pb-4">
         <span className="text-center grow text-2xl font-semibold">
           Edit Profile
@@ -73,9 +73,8 @@ function EditProfile({ onClose, existingData, onSave }) {
 
       <div className="flex flex-col gap-8 items-center w-full">
         <div className="grid grid-cols-10 gap-2 w-full">
-          <div className="w-12 h-12 -mt-4 bg-green-300 rounded-full col-span-1"></div>
-
-          <div className="w-full relative col-span-4">
+        
+          <div className="w-full relative col-span-5">
             <label className="absolute left-1 top-[-14px] text-sm text-gray-600 px-1">
               First Name
             </label>
@@ -172,7 +171,7 @@ function EditProfile({ onClose, existingData, onSave }) {
         </div>
 
         <button
-          className="bg-[#ff3d33] px-16 py-2 text-white rounded-md text-xl font-bold"
+          className="bg-[#006A43] px-16 py-2 text-white rounded-md text-xl font-bold"
           onClick={handleSubmit}
         >
           SAVE
