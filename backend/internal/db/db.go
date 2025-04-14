@@ -17,10 +17,9 @@ func GetMongoClient() *mongo.Client {
 
 func InitDB(uri string) error {
 
-	ctx, canel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
-	defer canel()
-
+	defer cancel()
 	clientOptions := options.Client().ApplyURI(uri)
 
 	var err error
