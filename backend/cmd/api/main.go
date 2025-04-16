@@ -11,13 +11,11 @@ import (
 )
 
 func main() {
-	// Load environment variables from .env file
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
-	// Get MONGO_URI from environment
 	mongoURI := os.Getenv("MONGO_URI")
 	if mongoURI == "" {
 		log.Fatal("MONGO_URI not set in environment")

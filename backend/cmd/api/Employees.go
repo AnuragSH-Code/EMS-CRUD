@@ -2,126 +2,135 @@ package main
 
 import (
 	"backend/internal/store"
-	"encoding/json"
+	"errors"
 	"net/http"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-func (app *application) GetAllEmployees(w http.ResponseWriter, r *http.Request) {
+type EmployeePayload struct {
+	Firstname  *string `json:"firstname"`
+	Lastname   *string `json:"lastname"`
+	Role       *string `json:"role"`
+	Department *string `json:"department"`
+	Email      *string `json:"email"`
+	ContactNo  *string `json:"contact_no"`
+	Manager    *string `json:"manager"`
+}
 
-	employees, err := app.Store.Employee.GetAllEmployees(r.Context())
+func validatePayload(payload *EmployeePayload) error {
+	if payload.Firstname == nil || *payload.Firstname == "" ||
+		payload.Lastname == nil || *payload.Lastname == "" ||
+		payload.Email == nil || *payload.Email == "" {
+		return errors.New("firstname, lastname, and email are required")
+	}
+	return nil
+}
+
+func (app *application) GetAllEmployees(w http.ResponseWriter, r *http.Request) {
+	pq := store.ParsePagination(r)
+
+	employees, err := app.Store.Employee.GetAllEmployees(r.Context(), pq)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(employees)
+	app.jsonResponse(w, http.StatusOK, employees)
 }
 
 func (app *application) CreateEmployee(w http.ResponseWriter, r *http.Request) {
-
-	var payload struct {
-		Firstname  string `json:"firstname"`
-		Lastname   string `json:"lastname"`
-		Role       string `json:"role"`
-		Department string `json:"department"`
-		Email      string `json:"email"`
-		ContactNo  string `json:"contact_no"`
-		Manager    string `json:"manager"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	var payload EmployeePayload
+	if err := readJSON(w, r, &payload); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	employee := store.Employee{
-		Firstname:  payload.Firstname,
-		Lastname:   payload.Lastname,
-		Role:       payload.Role,
-		Department: payload.Department,
-		Email:      payload.Email,
-		ContactNo:  payload.ContactNo,
-		Manager:    payload.Manager,
+	if err := validateEmployeePayload(&payload); err != nil {
+		writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
 	}
 
-	err := app.Store.Employee.Create(r.Context(), employee)
+	exists, err := app.Store.Employee.IsEmailExists(r.Context(), *payload.Email)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "Database error")
+		return
+	}
+	if exists {
+		writeJSONError(w, http.StatusConflict, "Email already exists")
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Employee created"})
+	emp := store.Employee{
+		Firstname:  *payload.Firstname,
+		Lastname:   *payload.Lastname,
+		Role:       valueOrEmpty(payload.Role),
+		Department: valueOrEmpty(payload.Department),
+		Email:      *payload.Email,
+		ContactNo:  valueOrEmpty(payload.ContactNo),
+		Manager:    valueOrEmpty(payload.Manager),
+	}
+
+	if err := app.Store.Employee.Create(r.Context(), emp); err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Failed to create employee")
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, map[string]string{"message": "Employee created"})
 }
 
 func (app *application) UpdateEmployee(w http.ResponseWriter, r *http.Request) {
 	idParam := r.URL.Query().Get("id")
 	if idParam == "" {
-		http.Error(w, "Missing id parameter", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "Missing id parameter")
 		return
 	}
 
-	objectID, err := primitive.ObjectIDFromHex(idParam)
+	objectID, err := bson.ObjectIDFromHex(idParam)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 
-	var payload struct {
-		Firstname  string `json:"firstname"`
-		Lastname   string `json:"lastname"`
-		Role       string `json:"role"`
-		Department string `json:"department"`
-		Email      string `json:"email"`
-		ContactNo  string `json:"contact_no"`
-		Manager    string `json:"manager"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	var payload EmployeePayload
+	if err := readJSON(w, r, &payload); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	updatedEmployee := store.Employee{
-		Firstname:  payload.Firstname,
-		Lastname:   payload.Lastname,
-		Role:       payload.Role,
-		Department: payload.Department,
-		Email:      payload.Email,
-		ContactNo:  payload.ContactNo,
-		Manager:    payload.Manager,
-	}
+	update := buildUpdateMap(&payload)
 
-	err = app.Store.Employee.UpdateEmployee(r.Context(), objectID, updatedEmployee)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if len(update) == 0 {
+		writeJSONError(w, http.StatusBadRequest, "No fields to update")
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"message": "Employee updated"})
+	if err := app.Store.Employee.UpdateEmployee(r.Context(), objectID, update); err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Failed to update employee")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "Employee updated"})
 }
 
 func (app *application) DeleteEmployee(w http.ResponseWriter, r *http.Request) {
 	idParam := r.URL.Query().Get("id")
 	if idParam == "" {
-		http.Error(w, "Missing id parameter", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "Missing id parameter")
 		return
 	}
 
-	objectID, err := primitive.ObjectIDFromHex(idParam)
+	objectID, err := bson.ObjectIDFromHex(idParam)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 
 	err = app.Store.Employee.DeleteEmployee(r.Context(), objectID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"message": "Employee deleted"})
+	writeJSON(w, http.StatusOK, map[string]string{"message": "Employee deleted"})
 }
