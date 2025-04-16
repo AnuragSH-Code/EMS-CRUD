@@ -2,7 +2,6 @@ package main
 
 import (
 	"backend/internal/store"
-	"errors"
 	"net/http"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -16,15 +15,6 @@ type EmployeePayload struct {
 	Email      *string `json:"email"`
 	ContactNo  *string `json:"contact_no"`
 	Manager    *string `json:"manager"`
-}
-
-func validatePayload(payload *EmployeePayload) error {
-	if payload.Firstname == nil || *payload.Firstname == "" ||
-		payload.Lastname == nil || *payload.Lastname == "" ||
-		payload.Email == nil || *payload.Email == "" {
-		return errors.New("firstname, lastname, and email are required")
-	}
-	return nil
 }
 
 func (app *application) GetAllEmployees(w http.ResponseWriter, r *http.Request) {

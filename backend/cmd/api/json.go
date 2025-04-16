@@ -11,8 +11,12 @@ import (
 func validateEmployeePayload(payload *EmployeePayload) error {
 	if payload.Firstname == nil || *payload.Firstname == "" ||
 		payload.Lastname == nil || *payload.Lastname == "" ||
-		payload.Email == nil || *payload.Email == "" {
-		return errors.New("firstname, lastname, and email are required")
+		payload.Role == nil || *payload.Role == "" ||
+		payload.Department == nil || *payload.Department == "" ||
+		payload.Email == nil || *payload.Email == "" ||
+		payload.ContactNo == nil || len(*payload.ContactNo) != 10 || *payload.ContactNo == "" ||
+		payload.Manager == nil || *payload.Manager == "" {
+		return errors.New("required fields are not complete")
 	}
 	return nil
 }
