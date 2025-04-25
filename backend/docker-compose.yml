@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  crud-api-1:
+    image: anuragshcode/ems-crud:0.1
+    container_name: crud-api-1
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+    networks:
+      - ems_net
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo-db
+    ports:
+      - "27018:27017"  # host:container
+    networks:
+      - ems_net
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./mongo-data  # host directory (relative to current dir)
+
+networks:
+  ems_net:
+    driver: bridge
