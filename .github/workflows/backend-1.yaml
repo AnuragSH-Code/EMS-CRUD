@@ -1,0 +1,52 @@
+name: Backend-Flow-1
+
+on: push
+
+jobs:
+  go-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Welcome Message
+        run: echo "I am on Linux Machine"
+
+      - name: Checkout Started
+        uses: actions/checkout@v4
+
+      - name: Installing Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Download Dependencies
+        run: go mod tidy
+        working-directory: backend
+
+      - name: Run Tests (skip DB tests)
+        run: SKIP_DB_TESTS=true go test -v ./...
+        working-directory: backend
+
+  artifact-push:
+    needs: go-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Verify Docker is Installed
+        run: docker --version
+
+      - name: Build Docker Image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/ems_crud:0.1 .
+        working-directory: backend
+
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push Docker Image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/ems_crud:0.1
+
+      - name: Task Complete
+        run: echo "TASK COMPLETE"

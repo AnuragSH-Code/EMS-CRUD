@@ -1,0 +1,6 @@
+backend/mongo-data/
+backend/tmp/
+backend/.air.toml
+backend/.startSTART
+
+.DS_Store
