@@ -1,4 +1,3 @@
-// File: internal/store/employee_test.go
 package store
 
 import (
