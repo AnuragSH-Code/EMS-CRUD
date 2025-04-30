@@ -3,44 +3,50 @@ name: Backend-Flow-1
 on: push
 
 jobs:
-    first-job:
-        runs-on: ubuntu-latest
-        steps:
+  go-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Welcome Message
+        run: echo "I am on Linux Machine"
 
-        - name: Welcome Message
-          run: echo "I am on Linux Machine"
+      - name: Checkout Started
+        uses: actions/checkout@v4
 
-        - name: Checkout Started
-          uses: actions/checkout@v4
-        
-        - name: Installing Go
-          uses: actions/setup-go@v5
-          with:
-            go-version: '1.24'
+      - name: Installing Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
 
-        - name: Download Dependencies
-          run: go mod tidy
-          working-directory: backend
+      - name: Download Dependencies
+        run: go mod tidy
+        working-directory: backend
 
-        - name: Build App
-          run: go build -o tmp/main ./cmd/api
-          working-directory: backend
+      - name: Test My Code
+        run: go test -v ./...
+        working-directory: backend
 
-        - name: Verify Docker is Installed
-          run: docker --version
+  artifact-push:
+    needs: go-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-        - name: Build Docker Image
-          run: docker build -t ${{ secrets.DOCKER_USERNAME }}/ems_crud:0.1 .
-          working-directory: backend
-  
-        - name: Docker Login
-          uses: docker/login-action@v3
-          with:
-            username: ${{ secrets.DOCKER_USERNAME }}
-            password: ${{ secrets.DOCKER_PASSWORD }}
-  
-        - name: Push Docker Image
-          run: docker push ${{ secrets.DOCKER_USERNAME }}/ems_crud:0.1
+      - name: Verify Docker is Installed
+        run: docker --version
 
-        - name: Task Complete
-          run: echo "TASK COMPLETE"
+      - name: Build Docker Image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/ems_crud:0.1 .
+        working-directory: backend
+
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push Docker Image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/ems_crud:0.1
+
+      - name: Task Complete
+        run: echo "TASK COMPLETE"
