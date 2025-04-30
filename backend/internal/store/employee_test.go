@@ -13,6 +13,9 @@ import (
 var testStore *MongoEmployeeStore
 
 func setupTestDB(t *testing.T) {
+	if os.Getenv("SKIP_DB_TESTS") == "true" {
+		t.Skip("Skipping DB tests in CI")
+	}
 	clientOpts := options.Client().ApplyURI("mongodb://localhost:27017")
 	client, err := mongo.Connect(clientOpts)
 	if err != nil {
