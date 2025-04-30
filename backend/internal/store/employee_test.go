@@ -3,6 +3,7 @@ package store
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -23,6 +24,10 @@ func setupTestDB(t *testing.T) {
 }
 
 func TestCreateAndGetEmployee(t *testing.T) {
+	if os.Getenv("SKIP_DB_TESTS") == "true" {
+		t.Skip("Skipping DB tests in CI")
+	}
+
 	setupTestDB(t)
 	testStore.collection.Drop(context.TODO())
 

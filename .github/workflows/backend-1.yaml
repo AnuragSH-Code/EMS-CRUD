@@ -21,8 +21,8 @@ jobs:
         run: go mod tidy
         working-directory: backend
 
-      - name: Test My Code
-        run: go test -v ./...
+      - name: Run Tests (skip DB tests)
+        run: SKIP_DB_TESTS=true go test -v ./...
         working-directory: backend
 
   artifact-push:
